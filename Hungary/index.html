@@ -1,0 +1,138 @@
+<!DOCTYPE html> 
+<html> 
+  <head> 
+    <meta charset='utf-8' />
+    <title>Bar Chart</title> 
+    <style>
+      svg {
+        background-color: pink;
+      }
+
+      .hungary {
+        fill: orange;
+      }
+      .county {
+        fill: green;
+      }
+    </style>
+  </head>
+
+<body>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://d3js.org/d3-array.v1.min.js"></script>
+  <script src="https://d3js.org/d3-geo.v1.min.js"></script>
+  <script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
+  <script>
+    let urlHungary = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l10-country/1-magyarorszag.geojson';
+    let urlBorsod = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/05-borsod-abauj-zemplen-megye.geojson';
+    const projection = d3.geoBaker(); //d3.geoAlbers()
+
+    var scaleX;
+    var scaleY;
+
+    const padding = 10;
+
+    const svgContainer = d3.select("body")
+                    .append("svg");
+
+    function makeRequest(method, url) {
+      return new Promise(function (resolve, reject) {
+          let xhr = new XMLHttpRequest();
+          xhr.open(method, url);
+          xhr.responseType = 'json';
+          xhr.onload = function () {
+              if (this.status >= 200 && this.status < 300) {
+                  resolve(xhr.response.features[0].geometry.coordinates[0][0]);
+              } else {
+                  reject({
+                      status: this.status,
+                      statusText: xhr.statusText
+                  });
+              }
+          };
+          xhr.onerror = function () {
+              reject({
+                  status: this.status,
+                  statusText: xhr.statusText
+              });
+          };
+          xhr.send();
+      });
+    }
+
+    lineFunction = d3.line()
+                      .x(function(d) { return d.x; })
+                      .y(function(d) { return d.y; })
+                      .curve(d3.curveLinear);
+
+    async function plottingCounty(url) {
+      let dataset = await makeRequest("GET", url);
+    // code below here will only execute when await makeRequest() finished loading
+      let projectedDataset = dataset.map( d => projection(d) );
+
+
+      var lineData = projectedDataset.map( d => ({"x": padding + scaleX(d[0]), "y": padding + scaleY(d[1])}) );
+
+      lineGraph = svgContainer.append("path")
+                         .attr("d", lineFunction(lineData))
+                         .attr("stroke", "blue")
+                         .attr("stroke-width", 1)
+                         .attr("class", "county");
+    }
+
+    async function plottingHungary() {
+      let dataset = await makeRequest("GET", urlHungary);
+    // code below here will only execute when await makeRequest() finished loading
+      let projectedDataset = dataset.map( d => projection(d) );
+
+      //console.log(projectedDataset[0]);
+
+      let maxCoordX = d3.max(projectedDataset, (d) => d[0]);
+      let maxCoordY = d3.max(projectedDataset, (d) => d[1]);
+      let minCoordX = d3.min(projectedDataset, (d) => d[0]);
+      let minCoordY = d3.min(projectedDataset, (d) => d[1]);
+
+      let w = (maxCoordX - minCoordX) * 400;
+      let h = (maxCoordY - minCoordY) * 400;
+
+      //console.log([minCoordX, maxCoordX, minCoordY, maxCoordY]);
+
+      scaleX = d3.scaleLinear()
+                       .domain([minCoordX, maxCoordX])
+                       .range([0, w]);
+      scaleY = d3.scaleLinear()
+                       .domain([minCoordY, maxCoordY])
+                       .range([0, h]);
+
+      var lineData = projectedDataset.map( d => ({"x": padding + scaleX(d[0]), "y": padding + scaleY(d[1])}) );
+
+
+      svgContainer.attr("width", w + 2 * padding)
+                  .attr("height", h + 2 * padding);
+
+      lineGraph = svgContainer.append("path")
+                         .attr("d", lineFunction(lineData))
+                         .attr("stroke", "blue")
+                         .attr("stroke-width", 1)
+                         .attr("class", "hungary");
+
+    }
+
+    async function plotting() {
+      await plottingHungary();
+      plottingCounty(urlBorsod);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      plotting();
+
+    });
+
+
+
+
+      
+
+
+  </script>
+</body>
