@@ -166,12 +166,15 @@
         }
       });
 
+      let strangeTowns = [];
+
       projData.forEach((town, i) => {
         let name = town.properties.NAME;
         if (!townIndexGeomData.hasOwnProperty(name)) {
           townIndexGeomData[name] = [i];
         } else {
           townIndexGeomData[name].push(i);
+          strangeTowns.push(name);
           console.log(name, townIndexGeomData[name]);
         }
       });
@@ -179,6 +182,8 @@
       let intersection = Object.keys(townIndexGeomData).filter(townName => townIndexNatData.hasOwnProperty(townName));
       let onlyNatData = Object.keys(townIndexNatData).filter(townName => !townIndexGeomData.hasOwnProperty(townName));
       let onlyGeomData = Object.keys(townIndexGeomData).filter(townName => !townIndexNatData.hasOwnProperty(townName));
+
+      
 
       Object.keys(townIndexNatData).forEach(town => {
         if (townIndexNatData[town].length > 1) {
@@ -191,7 +196,6 @@
 
 //      console.log(intersection.length, onlyNatData.length, onlyGeomData.length);
 
-
       let maxCoordX = d3.max(hunData[0].geometry.coordinates, (d) => d[0]);
       let maxCoordY = d3.max(hunData[0].geometry.coordinates, (d) => d[1]);
       let minCoordX = d3.min(hunData[0].geometry.coordinates, (d) => d[0]);
@@ -199,8 +203,6 @@
 
       let w = (maxCoordX - minCoordX) * 100;
       let h = (maxCoordY - minCoordY) * 100;
-
-      //console.log([minCoordX, maxCoordX, minCoordY, maxCoordY]);
 
       scaleX = d3.scaleLinear()
                  .domain([minCoordX, maxCoordX])
@@ -212,28 +214,17 @@
       var lineDataArray = projData.map( town => ({ "properties": {"NAME": town.properties.NAME}, "geometry": { "coordinates": town.geometry.coordinates, "polygon": town.geometry.coordinates.map( coord =>  
           ({"x": padding + scaleX(coord[0]), "y": padding + scaleY(coord[1])}) ) }  }) );
 
-      //console.log(lineDataArray[0].properties);
-
       svgContainer.attr("width", w + 2 * padding)
                   .attr("height", h + 2 * padding);
 
       lineDataArray.forEach( (town, i) => {
-        svgContainer.append("path")
-                    .attr("d", lineFunction(town.geometry.polygon))
-                    .attr("id", `town-${i}`)
-                    .attr("fill", '#'+Math.floor(Math.random()*16777215).toString(16));
+        if (strangeTowns.indexOf(town.properties.NAME) >= 0) {
+          svgContainer.append("path")
+                      .attr("d", lineFunction(town.geometry.polygon))
+                      .attr("id", `town-${i}`)
+                      .attr("fill", "blue");//'#'+Math.floor(Math.random()*16777215).toString(16));
+        }
       });
-
-
-
-
     });
-
-
-
-
-      
-
-
   </script>
 </body>
