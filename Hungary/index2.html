@@ -85,35 +85,11 @@
   <script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
   <script>
     
-    let urlHungary = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l10-country/1-magyarorszag.geojson';
-    let urlBorsod = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/05-borsod-abauj-zemplen-megye.geojson';
-    let urlSzabolcs = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/15-szabolcs-szatmar-bereg-megye.geojson';
-    let urlNograd = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/12-nograd-megye.geojson';
-    let urlHajdu = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/09-hajdu-bihar-megye.geojson';
-    let urlHeves = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/10-heves-megye.geojson';
-    let urlBacs = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/03-bacs-kiskun-megye.geojson';
-    let urlJasz = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/16-jasz-nagykun-szolnok-megye.geojson';
-    let urlBekes = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/04-bekes-megye.geojson';
-    let urlPest = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/13-pest-megye.geojson';
-    let urlCsongrad = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/06-csongrad-megye.geojson';
-    let urlKomarom = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/11-komarom-esztergom-megye.geojson';
-    let urlFejer = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/07-fejer-megye.geojson';
-    let urlVeszprem = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/19-veszprem-megye.geojson';
-    let urlSomogy = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/14-somogy-megye.geojson';
-    let urlGyor = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/08-gyor-moson-sopron-megye.geojson';
-    let urlVas = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/18-vas-megye.geojson';
-    let urlZala = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/20-zala-megye.geojson';
-    let urlTolna = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/17-tolna-megye.geojson';
-    let urlBaranya = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/02-baranya-megye.geojson';
-
     let urlLocalHungary =    "/GeoJson/hungary.geojson"
     let urlLocalCounties =   "/GeoJson/countiesAndBP.geojson"
     let urlLocalDistricts =  "/GeoJson/districts.geojson"
     let urlLocalTowns =      "/GeoJson/towns.geojson"
     let urlNationalityData = "/res2.json"
-
-
-    let urlArray = [urlHungary, urlBorsod, urlSzabolcs, urlNograd, urlHajdu, urlHeves, urlBacs, urlJasz, urlBekes, urlPest, urlCsongrad, urlKomarom, urlFejer, urlVeszprem, urlSomogy, urlGyor, urlVas, urlZala, urlTolna, urlBaranya];
 
     const projection = d3.geoBaker(); //d3.geoAlbers()
 
@@ -153,10 +129,6 @@
       return makeRequest("GET", url);
     }
 
-    //const getDataArray = async () => {
-    //  return Promise.all(urlArray.map(url => collectingData(url)))
-    //}
-
     lineFunction = d3.line()
                      .x(function(d) { return d.x; })
                      .y(function(d) { return d.y; })
@@ -177,15 +149,8 @@
 
       let myRegex = /^([JK]\d+\s)*/;
 
-      //nationalityData.forEach(town => {
-      //  console.log(town.name);
-      //  town.name = town.name.split(" ")[2];
-      //});
-
       nationalityData.forEach(town => {
-        //console.log(town.name);
         town.name = town.name.replace(myRegex, "");
-        //console.log(town.name);
       });
       
       
@@ -194,24 +159,25 @@
 
       nationalityData.forEach((town, i) => {
         let name = town.name;
-          if (!townIndexNatData.hasOwnProperty(name)) {
-          //console.log(town);
-            townIndexNatData[name] = [i];
-          }
-          
-          else {
-            townIndexNatData[name].push(i);
-          }
+        if (!townIndexNatData.hasOwnProperty(name)) {
+          townIndexNatData[name] = [i];
+        } else {
+          townIndexNatData[name].push(i);
+        }
       });
 
       projData.forEach((town, i) => {
-        townIndexGeomData[town.properties.NAME] = i;
+        let name = town.properties.NAME;
+        if (!townIndexGeomData.hasOwnProperty(name)) {
+          townIndexGeomData[name] = [i];
+        } else {
+          townIndexGeomData[name].push(i);
+          console.log(name, townIndexGeomData[name]);
+        }
       });
 
       let intersection = Object.keys(townIndexGeomData).filter(townName => townIndexNatData.hasOwnProperty(townName));
-
       let onlyNatData = Object.keys(townIndexNatData).filter(townName => !townIndexGeomData.hasOwnProperty(townName));
-
       let onlyGeomData = Object.keys(townIndexGeomData).filter(townName => !townIndexNatData.hasOwnProperty(townName));
 
       Object.keys(townIndexNatData).forEach(town => {
