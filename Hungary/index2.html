@@ -1,0 +1,221 @@
+<!DOCTYPE html> 
+<html> 
+  <head> 
+    <meta charset='utf-8' />
+    <title>Hungary</title> 
+    <style>
+      svg {
+        background-color: pink;
+      }
+
+      .hungary {
+        fill: orange;
+        stroke: blue;
+        stroke-width: 1;
+      }
+      .county {
+        fill: green;
+        stroke: blue;
+        stroke-width: 1;
+      }
+      #county-1 {
+        fill: red;
+      }
+      #county-2 {
+        fill: green;
+      }
+      #county-3 {
+        fill: blue;
+      }
+      #county-4 {
+        fill: orange;
+      }
+      #county-5 {
+        fill: pink;
+      }
+      #county-6 {
+        fill: purple;
+      }
+      #county-7 {
+        fill: navy;
+      }
+      #county-8 {
+        fill: yellow;
+      }
+      #county-9 {
+        fill: brown;
+      }
+      #county-10 {
+        fill: violet;
+      }
+      #county-11 {
+        fill: indigo;
+      }
+      #county-12 {
+        fill: khaki;
+      }
+      #county-13 {
+        fill: orangered;
+      }
+      #county-14 {
+        fill: gray;
+      }
+      #county-15 {
+        fill: magenta;
+      }
+      #county-16 {
+        fill: gold;
+      }
+      #county-17 {
+        fill: silver;
+      }
+      #county-18 {
+        fill: white;
+      }
+      #county-19 {
+        fill: black;
+      }
+    </style>
+  </head>
+
+<body>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://d3js.org/d3-array.v1.min.js"></script>
+  <script src="https://d3js.org/d3-geo.v1.min.js"></script>
+  <script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
+  <script>
+    
+    let urlHungary = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l10-country/1-magyarorszag.geojson';
+    let urlBorsod = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/05-borsod-abauj-zemplen-megye.geojson';
+    let urlSzabolcs = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/15-szabolcs-szatmar-bereg-megye.geojson';
+    let urlNograd = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/12-nograd-megye.geojson';
+    let urlHajdu = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/09-hajdu-bihar-megye.geojson';
+    let urlHeves = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/10-heves-megye.geojson';
+    let urlBacs = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/03-bacs-kiskun-megye.geojson';
+    let urlJasz = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/16-jasz-nagykun-szolnok-megye.geojson';
+    let urlBekes = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/04-bekes-megye.geojson';
+    let urlPest = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/13-pest-megye.geojson';
+    let urlCsongrad = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/06-csongrad-megye.geojson';
+    let urlKomarom = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/11-komarom-esztergom-megye.geojson';
+    let urlFejer = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/07-fejer-megye.geojson';
+    let urlVeszprem = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/19-veszprem-megye.geojson';
+    let urlSomogy = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/14-somogy-megye.geojson';
+    let urlGyor = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/08-gyor-moson-sopron-megye.geojson';
+    let urlVas = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/18-vas-megye.geojson';
+    let urlZala = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/20-zala-megye.geojson';
+    let urlTolna = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/17-tolna-megye.geojson';
+    let urlBaranya = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/02-baranya-megye.geojson';
+
+    let urlLocalHungary =   "/GeoJson/hungary.geojson"
+    let urlLocalCounties =  "/GeoJson/countiesAndBP.geojson"
+    let urlLocalDistricts = "/GeoJson/districts.geojson"
+    let urlLocalTowns =     "/GeoJson/towns.geojson"
+
+
+    let urlArray = [urlHungary, urlBorsod, urlSzabolcs, urlNograd, urlHajdu, urlHeves, urlBacs, urlJasz, urlBekes, urlPest, urlCsongrad, urlKomarom, urlFejer, urlVeszprem, urlSomogy, urlGyor, urlVas, urlZala, urlTolna, urlBaranya];
+
+    const projection = d3.geoBaker(); //d3.geoAlbers()
+
+    var scaleX;
+    var scaleY;
+
+    const padding = 10;
+
+    const svgContainer = d3.select("body").append("svg");
+
+    function makeRequest(method, url) {
+      return new Promise(function (resolve, reject) {
+        let xhr = new XMLHttpRequest();
+        xhr.open(method, url);
+        xhr.responseType = 'json';
+        xhr.onload = function () {
+          if (this.status >= 200 && this.status < 300) {
+            resolve(xhr.response.features);
+          } else {
+            reject({
+              status: this.status,
+              statusText: xhr.statusText
+            });
+          }
+        };
+        xhr.onerror = function () {
+          reject({
+            status: this.status,
+            statusText: xhr.statusText
+          });
+        };
+        xhr.send();
+      });
+    }
+
+    const collectingData = async url => {
+      return makeRequest("GET", url);
+    }
+
+    //const getDataArray = async () => {
+    //  return Promise.all(urlArray.map(url => collectingData(url)))
+    //}
+
+    lineFunction = d3.line()
+                     .x(function(d) { return d.x; })
+                     .y(function(d) { return d.y; })
+                     .curve(d3.curveLinear);
+
+    async function projectingGeoData(url) {
+      let projData = collectingData(url).then( towns => {
+        return towns.map( town => ({ "properties": {"NAME": town.properties.NAME}, "geometry": { "coordinates": town.geometry.coordinates[0].map( coord => projection(coord) ) }  }) );
+      }
+      );
+      return projData;
+    }
+
+    document.addEventListener("DOMContentLoaded", async function () {
+      let projData = await projectingGeoData(urlLocalTowns);
+      let hunData = await projectingGeoData(urlLocalHungary);
+      //console.log(hunData[0].properties);
+
+      let maxCoordX = d3.max(hunData[0].geometry.coordinates, (d) => d[0]);
+      let maxCoordY = d3.max(hunData[0].geometry.coordinates, (d) => d[1]);
+      let minCoordX = d3.min(hunData[0].geometry.coordinates, (d) => d[0]);
+      let minCoordY = d3.min(hunData[0].geometry.coordinates, (d) => d[1]);
+
+      let w = (maxCoordX - minCoordX) * 100;
+      let h = (maxCoordY - minCoordY) * 100;
+
+      //console.log([minCoordX, maxCoordX, minCoordY, maxCoordY]);
+
+      scaleX = d3.scaleLinear()
+                 .domain([minCoordX, maxCoordX])
+                 .range([0, w]);
+      scaleY = d3.scaleLinear()
+                 .domain([minCoordY, maxCoordY])
+                 .range([0, h]);
+
+      var lineDataArray = projData.map( town => ({ "properties": {"NAME": town.properties.NAME}, "geometry": { "coordinates": town.geometry.coordinates, "polygon": town.geometry.coordinates.map( coord =>  
+          ({"x": padding + scaleX(coord[0]), "y": padding + scaleY(coord[1])}) ) }  }) );
+
+      //console.log(lineDataArray[0].properties);
+
+      svgContainer.attr("width", w + 2 * padding)
+                  .attr("height", h + 2 * padding);
+
+      lineDataArray.forEach( (town, i) => {
+        svgContainer.append("path")
+                    .attr("d", lineFunction(town.geometry.polygon))
+                    .attr("id", `town-${i}`)
+                    .attr("fill", '#'+Math.floor(Math.random()*16777215).toString(16));
+      });
+
+
+
+
+    });
+
+
+
+
+      
+
+
+  </script>
+</body>
