@@ -37,6 +37,7 @@ IGNORED_NAMES = {
   'Többi város',
   'Községek, nagyközségek',
   'Megye összesen',
+  'Megyei jogú város'
 }
 
 def merge_header_lines(line1, line2):

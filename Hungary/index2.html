@@ -106,10 +106,11 @@
     let urlTolna = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/17-tolna-megye.geojson';
     let urlBaranya = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/02-baranya-megye.geojson';
 
-    let urlLocalHungary =   "/GeoJson/hungary.geojson"
-    let urlLocalCounties =  "/GeoJson/countiesAndBP.geojson"
-    let urlLocalDistricts = "/GeoJson/districts.geojson"
-    let urlLocalTowns =     "/GeoJson/towns.geojson"
+    let urlLocalHungary =    "/GeoJson/hungary.geojson"
+    let urlLocalCounties =   "/GeoJson/countiesAndBP.geojson"
+    let urlLocalDistricts =  "/GeoJson/districts.geojson"
+    let urlLocalTowns =      "/GeoJson/towns.geojson"
+    let urlNationalityData = "/res2.json"
 
 
     let urlArray = [urlHungary, urlBorsod, urlSzabolcs, urlNograd, urlHajdu, urlHeves, urlBacs, urlJasz, urlBekes, urlPest, urlCsongrad, urlKomarom, urlFejer, urlVeszprem, urlSomogy, urlGyor, urlVas, urlZala, urlTolna, urlBaranya];
@@ -130,7 +131,7 @@
         xhr.responseType = 'json';
         xhr.onload = function () {
           if (this.status >= 200 && this.status < 300) {
-            resolve(xhr.response.features);
+            resolve(xhr.response);
           } else {
             reject({
               status: this.status,
@@ -163,7 +164,7 @@
 
     async function projectingGeoData(url) {
       let projData = collectingData(url).then( towns => {
-        return towns.map( town => ({ "properties": {"NAME": town.properties.NAME}, "geometry": { "coordinates": town.geometry.coordinates[0].map( coord => projection(coord) ) }  }) );
+        return towns.features.map( town => ({ "properties": {"NAME": town.properties.NAME}, "geometry": { "coordinates": town.geometry.coordinates[0].map( coord => projection(coord) ) }  }) );
       }
       );
       return projData;
@@ -172,7 +173,58 @@
     document.addEventListener("DOMContentLoaded", async function () {
       let projData = await projectingGeoData(urlLocalTowns);
       let hunData = await projectingGeoData(urlLocalHungary);
-      //console.log(hunData[0].properties);
+      let nationalityData = await collectingData(urlNationalityData);
+
+      let myRegex = /^([JK]\d+\s)*/;
+
+      //nationalityData.forEach(town => {
+      //  console.log(town.name);
+      //  town.name = town.name.split(" ")[2];
+      //});
+
+      nationalityData.forEach(town => {
+        //console.log(town.name);
+        town.name = town.name.replace(myRegex, "");
+        //console.log(town.name);
+      });
+      
+      
+      let townIndexNatData = {};
+      let townIndexGeomData = {};
+
+      nationalityData.forEach((town, i) => {
+        let name = town.name;
+          if (!townIndexNatData.hasOwnProperty(name)) {
+          //console.log(town);
+            townIndexNatData[name] = [i];
+          }
+          
+          else {
+            townIndexNatData[name].push(i);
+          }
+      });
+
+      projData.forEach((town, i) => {
+        townIndexGeomData[town.properties.NAME] = i;
+      });
+
+      let intersection = Object.keys(townIndexGeomData).filter(townName => townIndexNatData.hasOwnProperty(townName));
+
+      let onlyNatData = Object.keys(townIndexNatData).filter(townName => !townIndexGeomData.hasOwnProperty(townName));
+
+      let onlyGeomData = Object.keys(townIndexGeomData).filter(townName => !townIndexNatData.hasOwnProperty(townName));
+
+      Object.keys(townIndexNatData).forEach(town => {
+        if (townIndexNatData[town].length > 1) {
+          console.log(town, townIndexNatData[town]);
+        }
+      })
+
+      console.log(nationalityData.length, Object.keys(townIndexNatData).length);
+      console.log(projData.length, Object.keys(townIndexGeomData).length);
+
+//      console.log(intersection.length, onlyNatData.length, onlyGeomData.length);
+
 
       let maxCoordX = d3.max(hunData[0].geometry.coordinates, (d) => d[0]);
       let maxCoordY = d3.max(hunData[0].geometry.coordinates, (d) => d[1]);
