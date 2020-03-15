@@ -29,7 +29,7 @@ HEADER_TRANSLATION = {
   'vietnami': 'vietnamese',
   'egy\u00e9b': 'other',
   '\u00d6sszesen': 'sum',
-  'N\u00e9pess\u00e9g ': 'population'  
+  'N\u00e9pess\u00e9g ': 'population' 
 }
 
 IGNORED_NAMES = {
@@ -37,7 +37,8 @@ IGNORED_NAMES = {
   'Többi város',
   'Községek, nagyközségek',
   'Megye összesen',
-  'Megyei jogú város'
+  'Megyei jogú város',
+  'Főváros összesen'
 }
 
 def merge_header_lines(line1, line2):

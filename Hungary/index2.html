@@ -5,7 +5,7 @@
     <title>Hungary</title> 
     <style>
       svg {
-        background-color: pink;
+        background-color: blue;
       }
 
       .hungary {
@@ -89,7 +89,8 @@
     let urlLocalCounties =   "/GeoJson/countiesAndBP.geojson"
     let urlLocalDistricts =  "/GeoJson/districts.geojson"
     let urlLocalTowns =      "/GeoJson/towns.geojson"
-    let urlNationalityData = "/res2.json"
+    //let urlNationalityData = "/2011Nepszamlalas/resNew.json"
+    let urlNationalityData = "resNew.json"
 
     const projection = d3.geoBaker(); //d3.geoAlbers()
 
@@ -136,18 +137,14 @@
 
     async function appendProjCoordinates(url) {
       let geomData = await collectingData(url);
-      geomData.features.forEach(town => town.geometry.projectedCoordinates = [town.geometry.coordinates[0].map( coord => projection(coord))]);
+      geomData.features.forEach(town => town.geometry.projectedCoordinates = town.geometry.coordinates.map(segment => segment.map(coord => projection(coord))));
       return geomData.features;
 
     }
  
-
-
-
     document.addEventListener("DOMContentLoaded", async function () {
       let geomData = await appendProjCoordinates(urlLocalTowns);
       let hunData = await appendProjCoordinates(urlLocalHungary);
-      let nationalityData = await collectingData(urlNationalityData);
 
       let maxCoordX = d3.max(hunData[0].geometry.projectedCoordinates[0], (d) => d[0]);
       let maxCoordY = d3.max(hunData[0].geometry.projectedCoordinates[0], (d) => d[1]);
@@ -162,56 +159,131 @@
                 .domain([minCoordY, maxCoordY])
                 .range([0, h]);
 
-      geomData.forEach(town => town.geometry.polygon = [town.geometry.projectedCoordinates[0].map( coord =>  
-         ({"x": padding + scaleX(coord[0]), "y": padding + scaleY(coord[1])}) )]);
+      geomData.forEach(town => town.geometry.polygon = town.geometry.projectedCoordinates.map(segment => segment.map(coord =>  
+         ({"x": padding + scaleX(coord[0]), "y": padding + scaleY(coord[1])})) ));
       
       svgContainer.attr("width", w + 2 * padding)
                   .attr("height", h + 2 * padding);
-      geomData.forEach( (town, i) => {
+     
+     let newGeomData = {};
+     geomData.forEach((town, i) => {
+       let name = town.properties.NAME;
+       if (!newGeomData.hasOwnProperty(name)) {
+         newGeomData[name] = ({"geometry": town.geometry});
+       } else {
+         let coordsA = newGeomData[name].geometry.coordinates;
+         let coordsB = town.geometry.coordinates;
+         let projCoordsA = newGeomData[name].geometry.projectedCoordinates;
+         let projCoordsB = town.geometry.projectedCoordinates;
+         let polygonA = newGeomData[name].geometry.polygon;
+         let polygonB = town.geometry.polygon;
+         newGeomData[name].geometry.coordinates = coordsA.concat(coordsB);
+         newGeomData[name].geometry.projectedCoordinates = projCoordsA.concat(projCoordsB);
+         newGeomData[name].geometry.polygon = polygonA.concat(polygonB);
+       }
+     });
+
+     let nationsData = await collectingData(urlNationalityData);
+
+     let myRegex = /^(\s*[JK]\d+\s)*/;
+
+     nationsData.forEach(town => {
+       town.name = town.name.replace(myRegex, "");
+     });
+     
+     //console.log(nationsData);
+     //let townIndexNatData = {};
+     
+     let newNationsData = {};
+     nationsData.forEach((town, i) => {
+       let name = town.name;
+       if (!newNationsData.hasOwnProperty(name)) {
+         newNationsData[name] = town;
+         delete newNationsData[name].name;
+       } else {
+         console.log("Error: towns listed multiple times.");
+       }
+
+     });
+
+     let townsNat = Object.keys(newNationsData);
+     let townsGeom = Object.keys(newGeomData);
+
+     //console.log(townsNat.length, townsGeom.length);
+
+     let onlyTownsNat = [];
+     let onlyTownsGeom = [];
+     let bothNatGeom = [];
+
+     townsNat.forEach(town => {
+      if (townsGeom.indexOf(town) < 0) {
+        onlyTownsNat.push(town);
+      }
+      else {
+        bothNatGeom.push(town);
+      }
+     })
+
+     townsGeom.forEach(town => {
+      if (townsNat.indexOf(town) < 0) {
+        onlyTownsGeom.push(town);
+      }
+     })
+
+     let mergedData = {};
+     bothNatGeom.forEach(town => {
+      mergedData[town] = ({"properties": newNationsData[town], "geometry": newGeomData[town].geometry});
+      // = 
+     });
+
+     let missingData = ["–", "…", "..."];
+
+     Object.keys(mergedData).forEach(town =>  {
+       let numOfGypsies = mergedData[town].properties.gypsy.replace(",", "");
+       let numOfHun = mergedData[town].properties.hungarian.replace(",", "");
+       if (missingData.indexOf(numOfGypsies) < 0 && missingData.indexOf(numOfHun) < 0) {
+         mergedData[town].properties["gypsyHunRatio"] = numOfGypsies / numOfHun;
+         //console.log(numOfGypsies, numOfHun, typeof numOfGypsies, typeof numOfHun, typeof mergedData[town].properties["gypsyHunRatio"]);  
+       }
+     } );
+
+     let maxGypsyHunRatio = d3.max(Object.keys(mergedData), town => mergedData[town].properties["gypsyHunRatio"]);
+     let minGypsyHunRatio = d3.min(Object.keys(mergedData), town => mergedData[town].properties["gypsyHunRatio"]);
+
+     const scale = d3.scaleLinear()
+                       .domain([minGypsyHunRatio, maxGypsyHunRatio])
+                       .range([100, 0]);
+
+     console.log(scale(maxGypsyHunRatio), scale(minGypsyHunRatio));
+
+     Object.keys(mergedData).forEach( (town, i) => {
        //if (strangeTowns.indexOf(town.properties.NAME) >= 0) {
-         svgContainer.append("path")
-                     .attr("d", lineFunction(town.geometry.polygon[0]))
+         svgContainer.append("path") 
+                     .attr("d", mergedData[town].geometry.polygon.map(poly => lineFunction(poly)))
                      .attr("id", `town-${i}`)
-                     .attr("fill", "blue");//'#'+Math.floor(Math.random()*16777215).toString(16));
+                     .attr("fill", "pink");//`hsl(0, 100%, ${scale(mergedData[town].properties["gypsyHunRatio"])}%)`);//'#'+Math.floor(Math.random()*16777215).toString(16));
        //}
       });
-      console.log(geomData);
 
-     //let myRegex = /^([JK]\d+\s)*/;
+     //console.log(onlyTownsNat.length, onlyTownsGeom.length, bothNatGeom.length);
 
-     //nationalityData.forEach(town => {
-     //  town.name = town.name.replace(myRegex, "");
-     //});
-     //
-     //
-     //let townIndexNatData = {};
-     //let townIndexGeomData = {};
+     //console.log(onlyTownsGeom);
+     //console.log("-----------------");
+     //console.log(onlyTownsNat);
+ 
 
-     //nationalityData.forEach((town, i) => {
-     //  let name = town.name;
-     //  if (!townIndexNatData.hasOwnProperty(name)) {
-     //    townIndexNatData[name] = [i];
-     //  } else {
-     //    townIndexNatData[name].push(i);
-     //  }
-     //});
 
-     //let strangeTownsIndexPairs = [];
 
-     //geomData.forEach((town, i) => {
-     //  let name = town.properties.NAME;
-     //  if (!townIndexGeomData.hasOwnProperty(name)) {
-     //    townIndexGeomData[name] = [i];
-     //  } else {
-     //    townIndexGeomData[name].push(i);
-     //    strangeTownsIndexPairs.push(townIndexGeomData[name]);
-     //    //console.log(strangeTownsIndexPairs);
-     //  }
-     //});
 
-     //let intersection = Object.keys(townIndexGeomData).filter(townName => townIndexNatData.hasOwnProperty(townName));
-     //let onlyNatData = Object.keys(townIndexNatData).filter(townName => !townIndexGeomData.hasOwnProperty(townName));
-     //let onlyGeomData = Object.keys(townIndexGeomData).filter(townName => !townIndexNatData.hasOwnProperty(townName));
+
+
+
+
+     
+
+     //let intersection = Object.keys(newGeomData).filter(townName => townIndexNatData.hasOwnProperty(townName));
+     //let onlyNatData = Object.keys(townIndexNatData).filter(townName => !newGeomData.hasOwnProperty(townName));
+     //let onlyGeomData = Object.keys(newGeomData).filter(townName => !townIndexNatData.hasOwnProperty(townName));
 
      //
 
@@ -222,7 +294,7 @@
      //})
 
      //console.log(nationalityData.length, Object.keys(townIndexNatData).length);
-     //console.log(geomData.length, Object.keys(townIndexGeomData).length);
+     //console.log(geomData.length, Object.keys(newGeomData).length);
 
 //   //  console.log(intersection.length, onlyNatData.length, onlyGeomData.length);
 
