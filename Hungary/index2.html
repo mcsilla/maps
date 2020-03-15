@@ -134,97 +134,103 @@
                      .y(function(d) { return d.y; })
                      .curve(d3.curveLinear);
 
-    async function projectingGeoData(url) {
-      let projData = collectingData(url).then( towns => {
-        return towns.features.map( town => ({ "properties": {"NAME": town.properties.NAME}, "geometry": { "coordinates": town.geometry.coordinates[0].map( coord => projection(coord) ) }  }) );
-      }
-      );
-      return projData;
+    async function appendProjCoordinates(url) {
+      let geomData = await collectingData(url);
+      geomData.features.forEach(town => town.geometry.projectedCoordinates = [town.geometry.coordinates[0].map( coord => projection(coord))]);
+      return geomData.features;
+
     }
+ 
+
+
 
     document.addEventListener("DOMContentLoaded", async function () {
-      let projData = await projectingGeoData(urlLocalTowns);
-      let hunData = await projectingGeoData(urlLocalHungary);
+      let geomData = await appendProjCoordinates(urlLocalTowns);
+      let hunData = await appendProjCoordinates(urlLocalHungary);
       let nationalityData = await collectingData(urlNationalityData);
 
-      let myRegex = /^([JK]\d+\s)*/;
-
-      nationalityData.forEach(town => {
-        town.name = town.name.replace(myRegex, "");
-      });
-      
-      
-      let townIndexNatData = {};
-      let townIndexGeomData = {};
-
-      nationalityData.forEach((town, i) => {
-        let name = town.name;
-        if (!townIndexNatData.hasOwnProperty(name)) {
-          townIndexNatData[name] = [i];
-        } else {
-          townIndexNatData[name].push(i);
-        }
-      });
-
-      let strangeTowns = [];
-
-      projData.forEach((town, i) => {
-        let name = town.properties.NAME;
-        if (!townIndexGeomData.hasOwnProperty(name)) {
-          townIndexGeomData[name] = [i];
-        } else {
-          townIndexGeomData[name].push(i);
-          strangeTowns.push(name);
-          console.log(name, townIndexGeomData[name]);
-        }
-      });
-
-      let intersection = Object.keys(townIndexGeomData).filter(townName => townIndexNatData.hasOwnProperty(townName));
-      let onlyNatData = Object.keys(townIndexNatData).filter(townName => !townIndexGeomData.hasOwnProperty(townName));
-      let onlyGeomData = Object.keys(townIndexGeomData).filter(townName => !townIndexNatData.hasOwnProperty(townName));
-
-      
-
-      Object.keys(townIndexNatData).forEach(town => {
-        if (townIndexNatData[town].length > 1) {
-          console.log(town, townIndexNatData[town]);
-        }
-      })
-
-      console.log(nationalityData.length, Object.keys(townIndexNatData).length);
-      console.log(projData.length, Object.keys(townIndexGeomData).length);
-
-//      console.log(intersection.length, onlyNatData.length, onlyGeomData.length);
-
-      let maxCoordX = d3.max(hunData[0].geometry.coordinates, (d) => d[0]);
-      let maxCoordY = d3.max(hunData[0].geometry.coordinates, (d) => d[1]);
-      let minCoordX = d3.min(hunData[0].geometry.coordinates, (d) => d[0]);
-      let minCoordY = d3.min(hunData[0].geometry.coordinates, (d) => d[1]);
-
+      let maxCoordX = d3.max(hunData[0].geometry.projectedCoordinates[0], (d) => d[0]);
+      let maxCoordY = d3.max(hunData[0].geometry.projectedCoordinates[0], (d) => d[1]);
+      let minCoordX = d3.min(hunData[0].geometry.projectedCoordinates[0], (d) => d[0]);
+      let minCoordY = d3.min(hunData[0].geometry.projectedCoordinates[0], (d) => d[1]);
       let w = (maxCoordX - minCoordX) * 100;
       let h = (maxCoordY - minCoordY) * 100;
-
       scaleX = d3.scaleLinear()
-                 .domain([minCoordX, maxCoordX])
-                 .range([0, w]);
+                .domain([minCoordX, maxCoordX])
+                .range([0, w]);
       scaleY = d3.scaleLinear()
-                 .domain([minCoordY, maxCoordY])
-                 .range([0, h]);
+                .domain([minCoordY, maxCoordY])
+                .range([0, h]);
 
-      var lineDataArray = projData.map( town => ({ "properties": {"NAME": town.properties.NAME}, "geometry": { "coordinates": town.geometry.coordinates, "polygon": town.geometry.coordinates.map( coord =>  
-          ({"x": padding + scaleX(coord[0]), "y": padding + scaleY(coord[1])}) ) }  }) );
-
+      geomData.forEach(town => town.geometry.polygon = [town.geometry.projectedCoordinates[0].map( coord =>  
+         ({"x": padding + scaleX(coord[0]), "y": padding + scaleY(coord[1])}) )]);
+      
       svgContainer.attr("width", w + 2 * padding)
                   .attr("height", h + 2 * padding);
-
-      lineDataArray.forEach( (town, i) => {
-        if (strangeTowns.indexOf(town.properties.NAME) >= 0) {
-          svgContainer.append("path")
-                      .attr("d", lineFunction(town.geometry.polygon))
-                      .attr("id", `town-${i}`)
-                      .attr("fill", "blue");//'#'+Math.floor(Math.random()*16777215).toString(16));
-        }
+      geomData.forEach( (town, i) => {
+       //if (strangeTowns.indexOf(town.properties.NAME) >= 0) {
+         svgContainer.append("path")
+                     .attr("d", lineFunction(town.geometry.polygon[0]))
+                     .attr("id", `town-${i}`)
+                     .attr("fill", "blue");//'#'+Math.floor(Math.random()*16777215).toString(16));
+       //}
       });
+      console.log(geomData);
+
+     //let myRegex = /^([JK]\d+\s)*/;
+
+     //nationalityData.forEach(town => {
+     //  town.name = town.name.replace(myRegex, "");
+     //});
+     //
+     //
+     //let townIndexNatData = {};
+     //let townIndexGeomData = {};
+
+     //nationalityData.forEach((town, i) => {
+     //  let name = town.name;
+     //  if (!townIndexNatData.hasOwnProperty(name)) {
+     //    townIndexNatData[name] = [i];
+     //  } else {
+     //    townIndexNatData[name].push(i);
+     //  }
+     //});
+
+     //let strangeTownsIndexPairs = [];
+
+     //geomData.forEach((town, i) => {
+     //  let name = town.properties.NAME;
+     //  if (!townIndexGeomData.hasOwnProperty(name)) {
+     //    townIndexGeomData[name] = [i];
+     //  } else {
+     //    townIndexGeomData[name].push(i);
+     //    strangeTownsIndexPairs.push(townIndexGeomData[name]);
+     //    //console.log(strangeTownsIndexPairs);
+     //  }
+     //});
+
+     //let intersection = Object.keys(townIndexGeomData).filter(townName => townIndexNatData.hasOwnProperty(townName));
+     //let onlyNatData = Object.keys(townIndexNatData).filter(townName => !townIndexGeomData.hasOwnProperty(townName));
+     //let onlyGeomData = Object.keys(townIndexGeomData).filter(townName => !townIndexNatData.hasOwnProperty(townName));
+
+     //
+
+     //Object.keys(townIndexNatData).forEach(town => {
+     //  if (townIndexNatData[town].length > 1) {
+     //    //console.log(town, townIndexNatData[town]);
+     //  }
+     //})
+
+     //console.log(nationalityData.length, Object.keys(townIndexNatData).length);
+     //console.log(geomData.length, Object.keys(townIndexGeomData).length);
+
+//   //  console.log(intersection.length, onlyNatData.length, onlyGeomData.length);
+
+     
+
+
+
+     
     });
   </script>
 </body>
