@@ -142,167 +142,153 @@
 
     }
  
-    document.addEventListener("DOMContentLoaded", async function () {
-      let geomData = await appendProjCoordinates(urlLocalTowns);
-      let hunData = await appendProjCoordinates(urlLocalHungary);
-
-      let maxCoordX = d3.max(hunData[0].geometry.projectedCoordinates[0], (d) => d[0]);
-      let maxCoordY = d3.max(hunData[0].geometry.projectedCoordinates[0], (d) => d[1]);
-      let minCoordX = d3.min(hunData[0].geometry.projectedCoordinates[0], (d) => d[0]);
-      let minCoordY = d3.min(hunData[0].geometry.projectedCoordinates[0], (d) => d[1]);
-      let w = (maxCoordX - minCoordX) * 100;
-      let h = (maxCoordY - minCoordY) * 100;
-      scaleX = d3.scaleLinear()
-                .domain([minCoordX, maxCoordX])
-                .range([0, w]);
-      scaleY = d3.scaleLinear()
-                .domain([minCoordY, maxCoordY])
-                .range([0, h]);
-
-      geomData.forEach(town => town.geometry.polygon = town.geometry.projectedCoordinates.map(segment => segment.map(coord =>  
-         ({"x": padding + scaleX(coord[0]), "y": padding + scaleY(coord[1])})) ));
-      
-      svgContainer.attr("width", w + 2 * padding)
-                  .attr("height", h + 2 * padding);
-     
-     let newGeomData = {};
-     geomData.forEach((town, i) => {
-       let name = town.properties.NAME;
-       if (!newGeomData.hasOwnProperty(name)) {
-         newGeomData[name] = ({"geometry": town.geometry});
-       } else {
-         let coordsA = newGeomData[name].geometry.coordinates;
-         let coordsB = town.geometry.coordinates;
-         let projCoordsA = newGeomData[name].geometry.projectedCoordinates;
-         let projCoordsB = town.geometry.projectedCoordinates;
-         let polygonA = newGeomData[name].geometry.polygon;
-         let polygonB = town.geometry.polygon;
-         newGeomData[name].geometry.coordinates = coordsA.concat(coordsB);
-         newGeomData[name].geometry.projectedCoordinates = projCoordsA.concat(projCoordsB);
-         newGeomData[name].geometry.polygon = polygonA.concat(polygonB);
-       }
-     });
-
-     let nationsData = await collectingData(urlNationalityData);
-
-     let myRegex = /^(\s*[JK]\d+\s)*/;
-
-     nationsData.forEach(town => {
-       town.name = town.name.replace(myRegex, "");
-     });
-     
-     //console.log(nationsData);
-     //let townIndexNatData = {};
-     
-     let newNationsData = {};
-     nationsData.forEach((town, i) => {
-       let name = town.name;
-       if (!newNationsData.hasOwnProperty(name)) {
-         newNationsData[name] = town;
-         delete newNationsData[name].name;
-       } else {
-         console.log("Error: towns listed multiple times.");
-       }
-
-     });
-
-     let townsNat = Object.keys(newNationsData);
-     let townsGeom = Object.keys(newGeomData);
-
-     //console.log(townsNat.length, townsGeom.length);
-
-     let onlyTownsNat = [];
-     let onlyTownsGeom = [];
-     let bothNatGeom = [];
-
-     townsNat.forEach(town => {
-      if (townsGeom.indexOf(town) < 0) {
-        onlyTownsNat.push(town);
-      }
-      else {
-        bothNatGeom.push(town);
-      }
-     })
-
-     townsGeom.forEach(town => {
-      if (townsNat.indexOf(town) < 0) {
-        onlyTownsGeom.push(town);
-      }
-     })
-
-     let mergedData = {};
-     bothNatGeom.forEach(town => {
-      mergedData[town] = ({"properties": newNationsData[town], "geometry": newGeomData[town].geometry});
-      // = 
-     });
-
-     let missingData = ["–", "…", "..."];
-
-     Object.keys(mergedData).forEach(town =>  {
-       let numOfGypsies = mergedData[town].properties.gypsy.replace(",", "");
-       let numOfHun = mergedData[town].properties.hungarian.replace(",", "");
-       if (missingData.indexOf(numOfGypsies) < 0 && missingData.indexOf(numOfHun) < 0) {
-         mergedData[town].properties["gypsyHunRatio"] = numOfGypsies / numOfHun;
-         //console.log(numOfGypsies, numOfHun, typeof numOfGypsies, typeof numOfHun, typeof mergedData[town].properties["gypsyHunRatio"]);  
-       }
-     } );
-
-     let maxGypsyHunRatio = d3.max(Object.keys(mergedData), town => mergedData[town].properties["gypsyHunRatio"]);
-     let minGypsyHunRatio = d3.min(Object.keys(mergedData), town => mergedData[town].properties["gypsyHunRatio"]);
-
-     const scale = d3.scaleLinear()
-                       .domain([minGypsyHunRatio, maxGypsyHunRatio])
-                       .range([100, 0]);
-
-     console.log(scale(maxGypsyHunRatio), scale(minGypsyHunRatio));
-
-     Object.keys(mergedData).forEach( (town, i) => {
-       //if (strangeTowns.indexOf(town.properties.NAME) >= 0) {
-         svgContainer.append("path") 
-                     .attr("d", mergedData[town].geometry.polygon.map(poly => lineFunction(poly)))
-                     .attr("id", `town-${i}`)
-                     .attr("fill", "pink");//`hsl(0, 100%, ${scale(mergedData[town].properties["gypsyHunRatio"])}%)`);//'#'+Math.floor(Math.random()*16777215).toString(16));
-       //}
-      });
-
-     //console.log(onlyTownsNat.length, onlyTownsGeom.length, bothNatGeom.length);
-
-     //console.log(onlyTownsGeom);
-     //console.log("-----------------");
-     //console.log(onlyTownsNat);
- 
-
-
-
-
-
-
-
-
-     
-
-     //let intersection = Object.keys(newGeomData).filter(townName => townIndexNatData.hasOwnProperty(townName));
-     //let onlyNatData = Object.keys(townIndexNatData).filter(townName => !newGeomData.hasOwnProperty(townName));
-     //let onlyGeomData = Object.keys(newGeomData).filter(townName => !townIndexNatData.hasOwnProperty(townName));
-
-     //
-
-     //Object.keys(townIndexNatData).forEach(town => {
-     //  if (townIndexNatData[town].length > 1) {
-     //    //console.log(town, townIndexNatData[town]);
-     //  }
-     //})
-
-     //console.log(nationalityData.length, Object.keys(townIndexNatData).length);
-     //console.log(geomData.length, Object.keys(newGeomData).length);
-
-//   //  console.log(intersection.length, onlyNatData.length, onlyGeomData.length);
-
-     
+    document.addEventListener("DOMContentLoaded", async function () 
+          {let geomData = await appendProjCoordinates(urlLocalTowns);
+                let hunData = await appendProjCoordinates(urlLocalHungary);
+          
+                let maxCoordX = d3.max(hunData[0].geometry.projectedCoordinates[0], (d) => d[0]);
+                let maxCoordY = d3.max(hunData[0].geometry.projectedCoordinates[0], (d) => d[1]);
+                let minCoordX = d3.min(hunData[0].geometry.projectedCoordinates[0], (d) => d[0]);
+                let minCoordY = d3.min(hunData[0].geometry.projectedCoordinates[0], (d) => d[1]);
+                let w = (maxCoordX - minCoordX) * 100;
+                let h = (maxCoordY - minCoordY) * 100;
+                scaleX = d3.scaleLinear()
+                          .domain([minCoordX, maxCoordX])
+                          .range([0, w]);
+                scaleY = d3.scaleLinear()
+                          .domain([minCoordY, maxCoordY])
+                          .range([0, h]);
+          
+                geomData.forEach(town => town.geometry.polygon = town.geometry.projectedCoordinates.map(segment => segment.map(coord =>  
+                   ({"x": padding + scaleX(coord[0]), "y": padding + scaleY(coord[1])})) ));
+                
+                svgContainer.attr("width", w + 2 * padding)
+                            .attr("height", h + 2 * padding);
+               
+               let newGeomData = {};
+               geomData.forEach((town, i) => {
+                 let name = town.properties.NAME;
+                 if (!newGeomData.hasOwnProperty(name)) {
+                   newGeomData[name] = ({"geometry": town.geometry});
+                 } else {
+                   let coordsA = newGeomData[name].geometry.coordinates;
+                   let coordsB = town.geometry.coordinates;
+                   let projCoordsA = newGeomData[name].geometry.projectedCoordinates;
+                   let projCoordsB = town.geometry.projectedCoordinates;
+                   let polygonA = newGeomData[name].geometry.polygon;
+                   let polygonB = town.geometry.polygon;
+                   newGeomData[name].geometry.coordinates = coordsA.concat(coordsB);
+                   newGeomData[name].geometry.projectedCoordinates = projCoordsA.concat(projCoordsB);
+                   newGeomData[name].geometry.polygon = polygonA.concat(polygonB);
+                 }
+               });
+          
+               let nationsData = await collectingData(urlNationalityData);
+          
+               let myRegex = /^(\s*[JK]\d+\s)*/;
+          
+               nationsData.forEach(town => {
+                 town.name = town.name.replace(myRegex, "");
+               });
+               
+               //console.log(nationsData);
+               //let townIndexNatData = {};
+               
+               let newNationsData = {};
+               nationsData.forEach((town, i) => {
+                 let name = town.name;
+                 if (!newNationsData.hasOwnProperty(name)) {
+                   newNationsData[name] = town;
+                   delete newNationsData[name].name;
+                 } else {
+                   console.log("Error: towns listed multiple times.");
+                 }
+          
+               });
+          
+               let townsNat = Object.keys(newNationsData);
+               let townsGeom = Object.keys(newGeomData);
+          
+               //console.log(townsNat.length, townsGeom.length);
+          
+               let onlyTownsNat = [];
+               let onlyTownsGeom = [];
+               let bothNatGeom = [];
+          
+               townsNat.forEach(town => {
+                if (townsGeom.indexOf(town) < 0) {
+                  onlyTownsNat.push(town);
+                }
+                else {
+                  bothNatGeom.push(town);
+                }
+               })
+          
+               townsGeom.forEach(town => {
+                if (townsNat.indexOf(town) < 0) {
+                  onlyTownsGeom.push(town);
+                }
+               })
+          
+               let mergedData = {};
+               bothNatGeom.forEach(town => {
+                mergedData[town] = ({"properties": newNationsData[town], "geometry": newGeomData[town].geometry});
+                // = 
+               });
+          
+          
+          
+               let missingData = ["–", "…", "..."];
+          
+               Object.keys(mergedData).forEach(town =>  {
+                 let numOfGypsies = mergedData[town].properties.gypsy.replace(",", "");
+                 let numOfHun = mergedData[town].properties.hungarian.replace(",", "");
+                 if (missingData.indexOf(numOfGypsies) < 0 && missingData.indexOf(numOfHun) < 0) {
+                   mergedData[town].properties["gypsyHunRatio"] = numOfGypsies / numOfHun;
+                   //console.log(numOfGypsies, numOfHun, typeof numOfGypsies, typeof numOfHun, typeof mergedData[town].properties["gypsyHunRatio"]);  
+                 }
+                 else {
+                  mergedData[town].properties["gypsyHunRatio"] = -1;
+                 }
+               } );
+          
+          
+          
+               let maxGypsyHunRatio = d3.max(Object.keys(mergedData), town => mergedData[town].properties["gypsyHunRatio"]);
+               let minGypsyHunRatio = d3.min(Object.keys(mergedData), town => {
+                let ratio = mergedData[town].properties["gypsyHunRatio"];
+                if (ratio >= 0) {
+                  return mergedData[town].properties["gypsyHunRatio"];
+                }
+               });
+          
+               const scale = d3.scaleLinear()
+                               .domain([minGypsyHunRatio, maxGypsyHunRatio])
+                               .range([100, 0]);
+          
+               Object.keys(mergedData).forEach(town => console.log(town, mergedData[town].properties["gypsy"], mergedData[town].properties["hungarian"],mergedData[town].properties["gypsyHunRatio"], scale(mergedData[town].properties["gypsyHunRatio"])));
+          
+          
+               Object.keys(mergedData).forEach( (town, i) => {
+                 //if (strangeTowns.indexOf(town.properties.NAME) >= 0) {
+                   svgContainer.append("path") 
+                               .attr("d", mergedData[town].geometry.polygon.map(poly => lineFunction(poly)))
+                               .attr("id", `town-${i}`)
+                               //.attr("fill", "red");
+                               .attr("fill", (town) => { 
+                                  if (mergedData[town].properties["gypsyHunRatio"] >= 0) {
+                                    return "yellow";
+                                  }
+                                }); //else {
+                               //    return `hsl(0, 100%, ${scale(mergedData[town].properties["gypsyHunRatio"])}%)`;
+                               //  }//'#'+Math.floor(Math.random()*16777215).toString(16));
+                               //});
+                 //}
+                });
+             });
 
 
 
-     
-    });
   </script>
+
 </body>
