@@ -4,118 +4,74 @@
     <meta charset='utf-8' />
     <title>Hungary</title> 
     <style>
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0; 
+        left: 0;
+        margin: 0;
+      }
       svg {
-        background-color: pink;
+        background-color: rgba(5, 29, 92, 1);
       }
 
-      .hungary {
-        fill: orange;
-        stroke: blue;
-        stroke-width: 1;
+      #tooltip {
+        display: none;
+        position: absolute;
+        border: 1px solid blue;
+        border-radius: 4px;
+        background-color: rgba(255, 244, 122, 0.4);
+        padding: 10px;
+        font-size: 20px;
       }
-      .county {
-        fill: green;
-        stroke: blue;
-        stroke-width: 1;
+      #svgContainer {
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
-      #county-1 {
-        fill: red;
+      #townName {
+        text-align: center;
+        font-weight: bold;
       }
-      #county-2 {
-        fill: green;
-      }
-      #county-3 {
-        fill: blue;
-      }
-      #county-4 {
-        fill: orange;
-      }
-      #county-5 {
-        fill: pink;
-      }
-      #county-6 {
-        fill: purple;
-      }
-      #county-7 {
-        fill: navy;
-      }
-      #county-8 {
-        fill: yellow;
-      }
-      #county-9 {
-        fill: brown;
-      }
-      #county-10 {
-        fill: violet;
-      }
-      #county-11 {
-        fill: indigo;
-      }
-      #county-12 {
-        fill: khaki;
-      }
-      #county-13 {
-        fill: orangered;
-      }
-      #county-14 {
-        fill: gray;
-      }
-      #county-15 {
-        fill: magenta;
-      }
-      #county-16 {
-        fill: gold;
-      }
-      #county-17 {
-        fill: silver;
-      }
-      #county-18 {
-        fill: white;
-      }
-      #county-19 {
-        fill: black;
-      }
-    </style>
+		</style>
   </head>
 
 <body>
+
+  <div id = "svgContainer">
+    <div id = "tooltip">
+      <div id = "townName"> </div>
+      <div id = "gypsy"> </div>
+      <div id = "hun"> </div>
+    </div>
+  </div>
+
   <script src="https://d3js.org/d3.v5.min.js"></script>
   <script src="https://d3js.org/d3-array.v1.min.js"></script>
   <script src="https://d3js.org/d3-geo.v1.min.js"></script>
   <script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
   <script>
     
-    let urlHungary = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l10-country/1-magyarorszag.geojson';
-    let urlBorsod = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/05-borsod-abauj-zemplen-megye.geojson';
-    let urlSzabolcs = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/15-szabolcs-szatmar-bereg-megye.geojson';
-    let urlNograd = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/12-nograd-megye.geojson';
-    let urlHajdu = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/09-hajdu-bihar-megye.geojson';
-    let urlHeves = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/10-heves-megye.geojson';
-    let urlBacs = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/03-bacs-kiskun-megye.geojson';
-    let urlJasz = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/16-jasz-nagykun-szolnok-megye.geojson';
-    let urlBekes = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/04-bekes-megye.geojson';
-    let urlPest = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/13-pest-megye.geojson';
-    let urlCsongrad = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/06-csongrad-megye.geojson';
-    let urlKomarom = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/11-komarom-esztergom-megye.geojson';
-    let urlFejer = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/07-fejer-megye.geojson';
-    let urlVeszprem = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/19-veszprem-megye.geojson';
-    let urlSomogy = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/14-somogy-megye.geojson';
-    let urlGyor = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/08-gyor-moson-sopron-megye.geojson';
-    let urlVas = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/18-vas-megye.geojson';
-    let urlZala = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/20-zala-megye.geojson';
-    let urlTolna = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/17-tolna-megye.geojson';
-    let urlBaranya = 'https://raw.githubusercontent.com/integralvision/geo-data-hungary/master/GeoJSON/l30-county/02-baranya-megye.geojson';
-
-    let urlArray = [urlHungary, urlBorsod, urlSzabolcs, urlNograd, urlHajdu, urlHeves, urlBacs, urlJasz, urlBekes, urlPest, urlCsongrad, urlKomarom, urlFejer, urlVeszprem, urlSomogy, urlGyor, urlVas, urlZala, urlTolna, urlBaranya];
+    let urlLocalHungary =    "/GeoJson/hungary.geojson"
+    let urlLocalCountiesAndBP =   "/GeoJson/countiesAndBP.geojson"
+    let urlLocalDistrictsOfHUN =  "/GeoJson/districts.geojson"
+    let urlLocalTowns =      "/GeoJson/towns.geojson"
+    let urlLocalDistrictsOfBP = "/GeoJson/districtsOfBP.geojson"
+    let urlBalaton = "vizek/balaton.geojson"
+    //let urlNationalityData = "/2011Nepszamlalas/resNew.json"
+    let urlNationalityData = "resNew.json"
 
     const projection = d3.geoBaker(); //d3.geoAlbers()
 
     var scaleX;
     var scaleY;
+    
 
-    const padding = 10;
-
-    const svgContainer = d3.select("body").append("svg");
+    const padding = 20;
 
     function makeRequest(method, url) {
       return new Promise(function (resolve, reject) {
@@ -124,7 +80,7 @@
         xhr.responseType = 'json';
         xhr.onload = function () {
           if (this.status >= 200 && this.status < 300) {
-            resolve(xhr.response.features[0].geometry.coordinates[0][0]);
+            resolve(xhr.response);
           } else {
             reject({
               status: this.status,
@@ -146,66 +102,282 @@
       return makeRequest("GET", url);
     }
 
-    const getDataArray = async () => {
-      return Promise.all(urlArray.map(url => collectingData(url)))
-    }
-
     lineFunction = d3.line()
                      .x(function(d) { return d.x; })
                      .y(function(d) { return d.y; })
                      .curve(d3.curveLinear);
 
-    async function projectingGeoDataArray() {
-      let projDataArray = getDataArray().then( data => {
-        return data.map( d => d.map( coord => projection(coord) ) );
+    async function appendProjCoordinates(url) {
+      let geomData = await collectingData(url);
+      geomData.features.forEach(town => town.geometry.projectedCoordinates = town.geometry.coordinates.map(segment => segment.map(coord => projection(coord))));
+      return geomData.features;
+    }
+
+    function scaleX(minX, maxX, w) {
+      return d3.scaleLinear()
+               .domain([minX, maxX])
+               .range([0, w]);
+    }
+
+    function scaleY(minY, maxY, h) {
+      return d3.scaleLinear()
+               .domain([minY, maxY])
+               .range([0, h]);
+    }
+
+    function appendKeyPolygon(geoData, minX, maxX, minY, maxY, w, h) {
+      geoData.forEach(town => 
+        town.geometry.polygon = town.geometry.projectedCoordinates.map(segment => 
+          segment.map(coord =>  
+            ({"x": padding + scaleX(minX, maxX, w)(coord[0]), "y": padding + scaleY(minY, maxY, h)(coord[1])})) ));  
+    }
+
+    function handleMouseOver(town, mergedData) {  
+      //d3.select(this).attr("fill", "orange");
+      d3.select("#tooltip")
+                           .style("display", "inline")
+                           .style("left", (d3.event.pageX) + 20 + "px")
+                           .style("top", (d3.event.pageY) + 20 + "px");
+      d3.select("#townName").text(town);
+      let ratio = mergedData[town].properties["gypsyRatio"];
+      let gypsyPercent = "";
+      if (ratio >= 0) {
+        gypsyPercent = (100 * ratio).toFixed(2) + " %";
       }
-      );
-      return projDataArray;
+      d3.select("#gypsy")
+        .text("Cigányok: " + mergedData[town].properties["gypsy"] + " fő, " + gypsyPercent );
+      d3.select("#hun").text("Lakosság: " + mergedData[town].properties["population"] + " fő");
+    }
+    
+    function handleMouseOut(town) {
+      d3.select("#tooltip").style("display", "none");
     }
 
     document.addEventListener("DOMContentLoaded", async function () {
-      let projDataArray = await projectingGeoDataArray();
+      let hunData = await appendProjCoordinates(urlLocalHungary);
 
-      let maxCoordX = d3.max(projDataArray[0], (d) => d[0]);
-      let maxCoordY = d3.max(projDataArray[0], (d) => d[1]);
-      let minCoordX = d3.min(projDataArray[0], (d) => d[0]);
-      let minCoordY = d3.min(projDataArray[0], (d) => d[1]);
-
-      let w = (maxCoordX - minCoordX) * 100;
-      let h = (maxCoordY - minCoordY) * 100;
-
-      //console.log([minCoordX, maxCoordX, minCoordY, maxCoordY]);
-
-      scaleX = d3.scaleLinear()
-                 .domain([minCoordX, maxCoordX])
-                 .range([0, w]);
-      scaleY = d3.scaleLinear()
-                 .domain([minCoordY, maxCoordY])
-                 .range([0, h]);
-
-      var lineDataArray = projDataArray.map( d => d.map( coord =>  
-          ({"x": padding + scaleX(coord[0]), "y": padding + scaleY(coord[1])}) 
-        )
-      );
+      const svg = d3.select("#svgContainer").append("svg");
+      var hungaryGroup = svg.append("g");
         
-      svgContainer.attr("width", w + 2 * padding)
-                  .attr("height", h + 2 * padding);
-
-      lineDataArray.forEach( (area, i) => {
-        svgContainer.append("path")
-                    .attr("d", lineFunction(area))
-                    .attr("id", `county-${i}`);
-      });
-
-
-
-    });
-
-
-
-
+      let maxCoordX = d3.max(hunData[0].geometry.projectedCoordinates[0], (d) => d[0]);
+      let maxCoordY = d3.max(hunData[0].geometry.projectedCoordinates[0], (d) => d[1]);
+      let minCoordX = d3.min(hunData[0].geometry.projectedCoordinates[0], (d) => d[0]);
+      let minCoordY = d3.min(hunData[0].geometry.projectedCoordinates[0], (d) => d[1]);
+      let maxWidth = 1024//window.innerWidth;
+      let maxHeight = 768//window.innerHeight;
+      let cx = maxCoordX - minCoordX;
+      let cy = maxCoordY - minCoordY;
+      let ratio = Math.min(maxWidth / cx, maxHeight / cy);
+      let w = cx * ratio;
+      let h = cy * ratio;
       
 
+      svg.attr("width", w + 2 * padding)
+         .attr("height", h + 2 * padding);
 
-  </script>
-</body>
+      var zoom = d3.zoom()
+        .scaleExtent([1, 8])
+        .on('zoom', function() {
+          svg.selectAll('path')
+             .attr('transform', d3.event.transform);
+      });
+
+      svg.call(d3.zoom().on("zoom", function () {
+                          svg.attr("transform", d3.event.transform)
+                        }))
+         .append("g");
+
+      appendKeyPolygon(hunData, minCoordX, maxCoordX, minCoordY, maxCoordY, w, h);
+
+      hungaryGroup.append("path")
+                  .attr("d", (town) => lineFunction(hunData[0].geometry.polygon[0]));
+                  //.attr("fill", "white");
+
+      let geomData = await appendProjCoordinates(urlLocalTowns);
+      let geomDataDistrictsOfBP = await appendProjCoordinates(urlLocalDistrictsOfBP);
+
+      appendKeyPolygon(geomData, minCoordX, maxCoordX, minCoordY, maxCoordY, w, h);
+      appendKeyPolygon(geomDataDistrictsOfBP, minCoordX, maxCoordX, minCoordY, maxCoordY, w, h);
+      
+      let newGeomData = {};
+
+      geomData.forEach((town, i) => {
+        let name = town.properties.NAME;
+        if (!newGeomData.hasOwnProperty(name)) {
+          newGeomData[name] = ({"geometry": town.geometry});
+        } else {
+          let coordsA = newGeomData[name].geometry.coordinates;
+          let coordsB = town.geometry.coordinates;
+          let projCoordsA = newGeomData[name].geometry.projectedCoordinates;
+          let projCoordsB = town.geometry.projectedCoordinates;
+          let polygonA = newGeomData[name].geometry.polygon;
+          let polygonB = town.geometry.polygon;
+          newGeomData[name].geometry.coordinates = coordsA.concat(coordsB);
+          newGeomData[name].geometry.projectedCoordinates = projCoordsA.concat(projCoordsB);
+          newGeomData[name].geometry.polygon = polygonA.concat(polygonB);
+        }
+      });
+
+      geomDataDistrictsOfBP.forEach((town, i) => {
+        let name = town.properties.NAME;
+        if (!newGeomData.hasOwnProperty(name)) {
+          newGeomData[name] = ({"geometry": town.geometry});
+        } else {
+          console.log("duplication in districtsOfBP.geojson");
+        }
+      });
+
+      let nationsData = await collectingData(urlNationalityData);
+
+      let myRegex = /^(\s*[JK]\d+\s)*/;
+
+      nationsData.forEach(town => {
+        town.name = town.name.replace(myRegex, "");
+      });
+      
+      let newNationsData = {};
+      nationsData.forEach((town, i) => {
+        let name = town.name;
+        if (!newNationsData.hasOwnProperty(name)) {
+          newNationsData[name] = town;
+          delete newNationsData[name].name;
+        } else {
+          console.log("Error: towns listed multiple times.");
+        }
+      });
+          
+      let townsNat = Object.keys(newNationsData);
+      let townsGeom = Object.keys(newGeomData);
+
+      let onlyTownsNat = [];
+      let onlyTownsGeom = [];
+      let bothNatGeom = [];
+
+      townsNat.forEach(town => {
+       if (townsGeom.indexOf(town) < 0) {
+         onlyTownsNat.push(town);
+         //console.log(town);
+       }
+       else {
+         bothNatGeom.push(town);
+       }
+      })
+    
+      townsGeom.forEach(town => {
+       if (townsNat.indexOf(town) < 0) {
+         onlyTownsGeom.push(town);
+         //console.log(town);
+       }
+      })
+
+      let mergedData = {};
+      x = mergedData;
+      bothNatGeom.forEach(town => {
+       mergedData[town] = ({"properties": newNationsData[town], "geometry": newGeomData[town].geometry});
+      });
+
+      mergedData["Balatonakarattya"] = {"properties": Object.keys(mergedData["Encs"].properties).reduce((propObj, currProp) => {
+           propObj[currProp] = "…";
+           return propObj;
+         }, {} ), "geometry": newGeomData["Balatonakarattya"].geometry };
+
+      let missingData = ["–", "…", "...", "*"];
+      
+      Object.keys(mergedData).forEach(town => {
+        let numOfGypsies = mergedData[town].properties.gypsy.replace(",", "");
+        let numOfPopulation = mergedData[town].properties.population.replace(",", "");
+        if (missingData.indexOf(numOfGypsies) < 0 && missingData.indexOf(numOfPopulation) < 0) {
+          mergedData[town].properties["gypsyRatio"] = numOfGypsies / numOfPopulation; 
+        }
+        else if (numOfGypsies == "–") {
+          mergedData[town].properties["gypsyRatio"] = 0;
+        }
+        else {
+          mergedData[town].properties["gypsyRatio"] = -1;
+        }
+      });
+
+      let maxgypsyRatio = d3.max(Object.keys(mergedData), town => mergedData[town].properties["gypsyRatio"]);
+      let mingypsyRatio = d3.min(Object.keys(mergedData), town => {
+        let ratio = mergedData[town].properties["gypsyRatio"];
+        if (ratio >= 0) {
+          return mergedData[town].properties["gypsyRatio"];
+        }
+      });
+
+      const scale = d3.scaleLinear()
+                      .domain([mingypsyRatio, maxgypsyRatio])
+                      .range([100, 0]);
+
+      let townsGroup = svg.append('g');
+
+      townsGroup.selectAll("path")
+                   .data(Object.keys(mergedData))
+                   .enter()
+                   .append("path")
+                   .attr("d", (town) => mergedData[town].geometry.polygon.map(poly => lineFunction(poly)))
+                   .attr("fill", (town) => {
+                     let ratio = mergedData[town].properties["gypsyRatio"];
+                     if (ratio >= 0) {
+                       return `hsl(0, 100%, ${scale(ratio)}%)`;
+                     } else {
+                       return "yellow";
+                     }
+                   })
+                  .on("mouseover", town => handleMouseOver(town, mergedData))
+                  .on("mouseout", handleMouseOut);
+
+      let geomDataCountiesAndBp = await appendProjCoordinates(urlLocalCountiesAndBP);
+      appendKeyPolygon(geomDataCountiesAndBp, minCoordX, maxCoordX, minCoordY, maxCoordY, w, h);
+      
+      let newGeomDataCountiesAndBP = {};
+
+      geomDataCountiesAndBp.forEach((town, i) => {
+        let name = town.properties.NAME;
+        if (!newGeomDataCountiesAndBP.hasOwnProperty(name)) {
+          newGeomDataCountiesAndBP[name] = ({"geometry": town.geometry});
+        } else {
+          console.log("duplication in countiesAndBP.geojson")
+        }
+      });
+
+      // countiesAndBPGroup.append("path").attr("d", newGeomData["Budapest"].geometry.polygon.map(poly => lineFunction(poly)))
+      //                               .attr("pointer-events", "none")
+      //                               .attr("fill", 'transparent')
+      //                               .attr("stroke", 'blue');
+
+      let balatonData = await collectingData(urlBalaton);
+      let balatonData2 = balatonData.geometries[0].coordinates.map(element => element[0]);
+      let balatonData3 = balatonData2.map(segment => segment.map(coord => projection(coord)));
+
+      let balatonPolygon = balatonData3.map(segment => 
+          segment.map(coord =>  
+            ({"x": padding + scaleX(minCoordX, maxCoordX, w)(coord[0]), "y": padding + scaleY(minCoordY, maxCoordY, h)(coord[1])})) );
+
+      console.log(balatonPolygon);
+
+      let balatonGroup = svg.append('g');
+
+      balatonGroup.append("path")
+                        .attr("d", balatonPolygon.map(poly => lineFunction(poly)))
+                        .attr("pointer-events", "none")
+                        .attr("fill", 'lightBlue')
+                        .attr("stroke", 'blue')
+                        .attr("stroke-width", 0.3);
+
+      let countiesAndBPGroup = svg.append('g');
+
+      countiesAndBPGroup.selectAll("path")
+                        .data(Object.keys(geomDataCountiesAndBp))
+                        .enter()
+                        .append("path")
+                        .attr("d", (town) => geomDataCountiesAndBp[town].geometry.polygon.map(poly => lineFunction(poly)))
+                        .attr("pointer-events", "none")
+                        .attr("fill", 'transparent')
+                        .attr("stroke", 'blue')
+                        .attr("stroke-width", 0.3);
+
+      svg.call(zoom);
+    });
+
+</script>
