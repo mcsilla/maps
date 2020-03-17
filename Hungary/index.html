@@ -56,11 +56,11 @@
   <script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
   <script>
     
-    let urlLocalHungary =    "/GeoJson/hungary.geojson"
-    let urlLocalCountiesAndBP =   "/GeoJson/countiesAndBP.geojson"
-    let urlLocalDistrictsOfHUN =  "/GeoJson/districts.geojson"
-    let urlLocalTowns =      "/GeoJson/towns.geojson"
-    let urlLocalDistrictsOfBP = "/GeoJson/districtsOfBP.geojson"
+    let urlLocalHungary =    "GeoJson/hungary.geojson"
+    let urlLocalCountiesAndBP =   "GeoJson/countiesAndBP.geojson"
+    let urlLocalDistrictsOfHUN =  "GeoJson/districts.geojson"
+    let urlLocalTowns =      "GeoJson/towns.geojson"
+    let urlLocalDistrictsOfBP = "GeoJson/districtsOfBP.geojson"
     let urlBalaton = "vizek/balaton.geojson"
     //let urlNationalityData = "/2011Nepszamlalas/resNew.json"
     let urlNationalityData = "resNew.json"
@@ -341,11 +341,6 @@
         }
       });
 
-      // countiesAndBPGroup.append("path").attr("d", newGeomData["Budapest"].geometry.polygon.map(poly => lineFunction(poly)))
-      //                               .attr("pointer-events", "none")
-      //                               .attr("fill", 'transparent')
-      //                               .attr("stroke", 'blue');
-
       let balatonData = await collectingData(urlBalaton);
       let balatonData2 = balatonData.geometries[0].coordinates.map(element => element[0]);
       let balatonData3 = balatonData2.map(segment => segment.map(coord => projection(coord)));
@@ -353,8 +348,6 @@
       let balatonPolygon = balatonData3.map(segment => 
           segment.map(coord =>  
             ({"x": padding + scaleX(minCoordX, maxCoordX, w)(coord[0]), "y": padding + scaleY(minCoordY, maxCoordY, h)(coord[1])})) );
-
-      console.log(balatonPolygon);
 
       let balatonGroup = svg.append('g');
 
